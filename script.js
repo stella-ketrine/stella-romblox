@@ -7,36 +7,55 @@ const CREDENTIALS = {
 function setLoginStatus(status) {
     try {
         localStorage.setItem('isLoggedIn', status);
+        sessionStorage.setItem('isLoggedIn', status);
     } catch (e) {
-        document.cookie = "isLoggedIn=" + status + "; path=/; max-age=86400";
+        document.cookie = "isLoggedIn=" + status + "; path=/; max-age=86400; SameSite=Lax";
     }
 }
 
 // Fungsi untuk get login status
 function getLoginStatus() {
     try {
-        return localStorage.getItem('isLoggedIn');
-    } catch (e) {
-        const cookies = document.cookie.split(';');
-        for (let cookie of cookies) {
-            const [name, value] = cookie.trim().split('=');
-            if (name === 'isLoggedIn') return value;
-        }
-        return null;
+        let status = localStorage.getItem('isLoggedIn');
+        if (!status) status = sessionStorage.getItem('isLoggedIn');
+        if (status) return status;
+    } catch (e) {}
+    
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'isLoggedIn') return value;
     }
+    return null;
 }
 
 // Fungsi untuk remove login status
 function removeLoginStatus() {
     try {
         localStorage.removeItem('isLoggedIn');
-    } catch (e) {
-        document.cookie = "isLoggedIn=; path=/; max-age=0";
-    }
+        sessionStorage.removeItem('isLoggedIn');
+    } catch (e) {}
+    document.cookie = "isLoggedIn=; path=/; max-age=0";
+}
+
+// Cek apakah halaman login
+function isLoginPage() {
+    const path = window.location.pathname;
+    return path.endsWith('index.html') || 
+           path.endsWith('/') || 
+           path === '/' ||
+           path.endsWith('/stella-romblox') ||
+           path.endsWith('/stella-romblox/');
+}
+
+// Cek apakah halaman yang dilindungi
+function isProtectedPage() {
+    const path = window.location.pathname;
+    return path.includes('profile.html') || path.includes('contact.html');
 }
 
 // Halaman Login
-if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/')) {
+if (isLoginPage()) {
     const loginForm = document.getElementById('loginForm');
     const errorMessage = document.getElementById('errorMessage');
 
@@ -47,13 +66,19 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             
+            console.log('Mencoba login dengan:', username);
+            
             if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
+                console.log('Login BERHASIL!');
                 setLoginStatus('true');
-                console.log('Login berhasil, redirect ke profile.html');
+                
+                // Double check
                 setTimeout(function() {
+                    console.log('Status tersimpan:', getLoginStatus());
                     window.location.href = 'profile.html';
-                }, 100);
+                }, 200);
             } else {
+                console.log('Login GAGAL - username/password salah');
                 errorMessage.textContent = 'Username atau password salah!';
                 errorMessage.style.animation = 'shake 0.5s';
                 
@@ -73,20 +98,26 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
 }
 
 // Halaman Profile & Contact - Proteksi
-if (window.location.pathname.endsWith('profile.html') || window.location.pathname.endsWith('contact.html')) {
-    console.log('Checking login status...');
+if (isProtectedPage()) {
+    console.log('=== PROTECTED PAGE ===');
+    console.log('Current path:', window.location.pathname);
     console.log('Login status:', getLoginStatus());
     
-    if (!getLoginStatus() || getLoginStatus() !== 'true') {
-        console.log('Tidak login, redirect ke index.html');
+    const loginStatus = getLoginStatus();
+    
+    if (!loginStatus || loginStatus !== 'true') {
+        console.log('TIDAK LOGIN - Redirect ke index.html');
+        alert('Anda harus login terlebih dahulu!');
         window.location.href = 'index.html';
     } else {
-        console.log('Sudah login, tampilkan halaman');
+        console.log('SUDAH LOGIN - Tampilkan halaman');
     }
     
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', function() {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Logout clicked');
             removeLoginStatus();
             window.location.href = 'index.html';
         });
@@ -102,3 +133,6 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+console.log('Script.js loaded successfully');
+console.log('Current page:', window.location.pathname);
