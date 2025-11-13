@@ -15,7 +15,7 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
             const password = document.getElementById('password').value;
             
             if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
-                sessionStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('isLoggedIn', 'true');
                 window.location.href = 'profile.html';
             } else {
                 errorMessage.textContent = 'Username atau password salah!';
@@ -37,14 +37,14 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
 }
 
 if (window.location.pathname.endsWith('profile.html') || window.location.pathname.endsWith('contact.html')) {
-    if (!sessionStorage.getItem('isLoggedIn')) {
+    if (!localStorage.getItem('isLoggedIn')) {
         window.location.href = 'index.html';
     }
     
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function() {
-            sessionStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('isLoggedIn');
             window.location.href = 'index.html';
         });
     }
